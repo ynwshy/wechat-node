@@ -16,61 +16,38 @@ router.get('/', function(req, res, next) {
     console.log("post: wechat/accesstoken");
     console.log(new Date().getTime());
     // AppID和AppSecret可在“微信公众平台-开发-基本配置”
-    let accesstokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${wechat_cfg.appID}&secret=${wechat_cfg.appsecret}`;
-
+    // let accesstokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${wechat_cfg.appID}&secret=${wechat_cfg.appsecret}`;
 
     // accesstokenUtils.getAccessToken();
 
     accesstokenUtils.getAccessToken()
-        .then(function (content) {
-            console.log("getAccessToken  "+content);
+        .then(function(fsContent) {
+            console.log("getAccessToken  " + fsContent);
             console.log("getAccessToken  ");
+            var fsContentData = "";
             try {
-                data = JOSN.parse(content);
-            }
-            catch(e) {
+                console.log(" JOSN.parse(fsContent)");
+                fsContentData = JSON.parse(fsContent);
+            } catch (e) {
+                console.log(" catch (e)");
                 return accesstokenUtils.updateAccessToken();
             }
-            if (accesstokenUtils.isValidAccessToken(content)) {
-                Promise.resolve(data);
-            }
-            else {
+            if (accesstokenUtils.isValidAccessToken(fsContentData)) {
+                console.log("res.send( fsContent)");
+                res.send(fsContentData);
+                return Promise.resolve("");
+            } else {
+                console.log("accesstokenUtils.updateAccessToken()");
                 return accesstokenUtils.updateAccessToken();
             }
         })
-        .then(function (data) {
-            accesstokenUtils.access_token = data.access_token;
-            accesstokenUtils.expires_in = data.expires_in;
-            accesstokenUtils.saveAccessToken(data);
-        });;
-
-    // console.log(accesstokenUrl);
-    // request(accesstokenUrl, function(error, response, body) {
-    //     if (!error && response.statusCode == 200) {
-    //         // console.log(JSON.parse(body));
-
-    //         // 同步读取
-    //         var data = fs.readFileSync(wechat_cfg.wechat_file);
-    //         // console.log("同步读取: " + data.toString());
-
-    //         console.log(new Date().getTime());
-
-    //         // fs.writeFile(wechat_cfg.wechat_file, JSON.parse(body).access_token, function(err, content) {
-    //         //     if (err) {
-    //         //         return console.error(err);
-    //         //     }
-    //         //     fs.readFile(wechat_cfg.wechat_file, function(err, data) {
-    //         //         if (err) {
-    //         //             return console.error(err);
-    //         //         }
-    //         //         console.log(new Date().getTime());
-    //         //         console.log("异步读取文件数据: " + data.toString());
-    //         //     });
-    //         // });
-    //         res.send(JSON.parse(body).access_token);
-
-    //     }
-    // });
+        .then(function(reqData) {
+            if (reqData!=="") {
+                console.log("updateAccessToken  callback :");
+                accesstokenUtils.saveAccessToken(reqData).then(() => res.send(reqData));
+                console.log("res.send( updateAccessToken  callback)");
+            }
+        });
 
 
 });
