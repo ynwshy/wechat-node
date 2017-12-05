@@ -1,10 +1,9 @@
-'use strict'
 var Promise = require('bluebird'); //导入这个模块来调用Promise，来实现数据继续往下传
 var request = Promise.promisify(require('request')); //因为我们用到了Promise，所以在调用request的时候需要这样导入
 
 var wechat_cfg = require('../../config/wechat/wechat.cfg');
 
-var fsPromiseUtils = require('../../utils/fsPromiseUtils') //这个辅助代码的实现
+var fsPromiseUtils = require('../../utils/fsPromiseUtils'); //这个辅助代码的实现
 
 var prefix = 'https://api.weixin.qq.com/cgi-bin/'; //因为这一部分API是固定的，所以我们单独拿出来
 var api = {
@@ -17,37 +16,43 @@ function Wechat() { //这里面的值就是从中间件传过来的
     this.wechat_file = wechat_cfg.wechat_file;
 
 
-    this.getAccessToken = function() {
-        return fsPromiseUtils.readFileAsync(wechat_cfg.wechat_file);
-    }
+    this.getAccessToken = function(getAccessTokenCallback) {
+
+        return new Promise(function(resolve, reject) {
+            fsPromiseUtils.readFileAsync(wechat_cfg.wechat_file)
+                .then(function(fsContent) {
+                    console.log("fsContent: " + fsContent);
+                    var fsContentData = JSON.parse(fsContent);
+                    if (_this.isValidAccessToken(fsContentData)) {
+                        resolve(fsContentData);
+                    } else {
+                        _this.updateAccessToken()
+                            .then(function(reqData) {
+                                console.log("updateAccessToken  callback :");
+                                if (reqData !== null) {
+                                    _this.saveAccessToken(reqData).then(function() {
+                                        resolve(reqData);
+                                    });
+                                }
+                            });
+                    }
+                });
+        });
+
+    };
+
+    this.getAccessToken().then(function(accessToken) {
+        console.log(accessToken);
+    });
 
     this.saveAccessToken = function(data) {
         //通过这个来保存access_token
         return fsPromiseUtils.writeFileAsync(wechat_cfg.wechat_file, JSON.stringify(data));
-    }
+    };
 
     //按照上面我们讲的逻辑来实现getAccessToken
-    this.getAccessToken()
-        .then(function(fsContent) {
-            console.log("getAccessToken  " + fsContent);
-            console.log("getAccessToken  ");
-            var fsContentData = "";
-            try {
-                fsContentData = JOSN.parse(fsContent);
-            } catch (e) {
-                return _this.updateAccessToken();
-            }
-            if (_this.isValidAccessToken(fsContent)) {
-                // Promise.resolve(fsContentData);
-                console.log("getAccessToken  " + fsContent);
-            } else {
-                return _this.updateAccessToken();
-            }
-        })
-        .then(function(data) {
-            _this.saveAccessToken(JSON.stringify(data));
-            // fsPromiseUtils.writeFileAsync(wechat_file, JSON.stringify(data));
-        });
+    // this.getAccessToken()
+
 }
 
 
@@ -55,16 +60,16 @@ Wechat.prototype.isValidAccessToken = function(data) {
     if (!data || !data.access_token || !data.expires_in) {
         return false;
     }
-console.log("------------------------");
-console.log(new Date().getTime());
-console.log(data.expires_in);
-console.log("------------------------");
+    console.log("------------------------");
+    console.log(new Date().getTime());
+    console.log(data.expires_in);
+    console.log("------------------------");
     if (new Date().getTime() < data.expires_in) {
         return true;
     } else {
         return false;
     }
-}
+};
 
 Wechat.prototype.updateAccessToken = function() {
     var _this = this;
@@ -76,7 +81,7 @@ Wechat.prototype.updateAccessToken = function() {
             console.log(body);
             if (!error && response.statusCode === 200) {
                 var now = (new Date().getTime());
-                var expires_in = now + ( 20) * 1000;
+                var expires_in = now + (20) * 1000;
                 body.expires_in = expires_in;
                 // _this.saveAccessToken(body);
                 resolve(body);
@@ -85,6 +90,6 @@ Wechat.prototype.updateAccessToken = function() {
             }
         });
     });
-}
+};
 
 module.exports = new Wechat();

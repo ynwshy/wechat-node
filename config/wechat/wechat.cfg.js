@@ -7,6 +7,7 @@ module.exports = {
     appsecret: '8317a77791c9003bcb66a597ab66bb03',
     token: "demotoken",
     wechat_file: wechat_file,
+    
     noncestr: 'Wm3WZYTPz0wzccnW',
 
 

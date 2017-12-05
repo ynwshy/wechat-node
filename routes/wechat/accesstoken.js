@@ -15,23 +15,8 @@ console.log("accesstoken.js");
 router.get('/', function(req, res, next) {
 
     accesstokenUtils.getAccessToken()
-        .then(function(fsContent) {
-            console.log("fs readfile AccessToken  callback :");
-            var fsContentData = JSON.parse(fsContent);
-
-            if (accesstokenUtils.isValidAccessToken(fsContentData)) {
-                res.send(fsContentData);
-                return Promise.resolve(null);
-            } else {
-                return accesstokenUtils.updateAccessToken();
-            }
-
-        })
-        .then(function(reqData) {
-            console.log("updateAccessToken  callback :");
-            if (reqData !== null) {
-                accesstokenUtils.saveAccessToken(reqData).then(() => res.send(reqData));
-            }
+        .then(function(accessToken) {
+            res.send(accessToken);
         });
 
 
