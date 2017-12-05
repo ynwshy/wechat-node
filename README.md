@@ -38,6 +38,11 @@ module.exports = {
 - 先写出一个接口 /weixin/checksignature
 
 router 文件夹下创建文件夹weixin，再添加一个checksignature.js
+
+签名需要加密 安装crypto
+```
+npm install crypto
+```
 ```javascript
 // /routers/weixin/token.js
 
@@ -93,10 +98,6 @@ router.get('/', function(req, res, next) {
 module.exports = router;
 ```
 
-签名需要加密 安装crypto
-```
-npm install crypto
-```
 在app.js中配置路由
 ```javascript
 var weixin_token = require('./routes/weixin/token');
@@ -124,15 +125,69 @@ https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=APPID
 
 router 文件夹下创建文件夹weixin，再添加一个accesstoken.js
 
-安装request模块：
+需要安装request模块：
 ```
 npm install request
 ```
 
 ```javascript
 
+// /routers/weixin/accesstoken.js
+
+var express = require('express');
+var router = express.Router();
+var request = require('request');
+var fs = require('fs'); //因为我们需要对文件来进行操作，所以导入fs模块
+
+var accesstokenUtils = require('../../utils/wechat/accesstokenUtils')
+
+var wechat_cfg = require('../../config/wechat/wechat.cfg');
+
+
+console.log("accesstoken.js");
+
+router.get('/', function(req, res, next) {
+    console.log("post: wechat/accesstoken");
+    console.log(new Date().getTime());
+    // AppID和AppSecret可在“微信公众平台-开发-基本配置”
+    // let accesstokenUrl = `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${wechat_cfg.appID}&secret=${wechat_cfg.appsecret}`;
+
+    // accesstokenUtils.getAccessToken();
+
+    accesstokenUtils.getAccessToken()
+        .then(function(fsContent) {
+            console.log("getAccessToken  " + fsContent);
+            console.log("getAccessToken  ");
+            var fsContentData = JSON.parse(fsContent);
+
+            if (accesstokenUtils.isValidAccessToken(fsContentData)) {
+                res.send(fsContentData);
+                return Promise.resolve(null);
+            } else {
+                console.log("accesstokenUtils.updateAccessToken()");
+                return accesstokenUtils.updateAccessToken();
+            }
+
+        })
+        .then(function(reqData) {
+            if (reqData!==null) {
+                console.log("updateAccessToken  callback :");
+                accesstokenUtils.saveAccessToken(reqData).then(() => res.send(reqData));
+                console.log("res.send( updateAccessToken  callback)");
+            }
+        });
+
+
+});
+
+module.exports = router;
 ```
 
+
+
+```javascript
+
+```
 
 
 ***
