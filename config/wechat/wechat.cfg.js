@@ -2,8 +2,8 @@ var path = require('path') //我们用文件来存储access_token所以需要把
 
 
 module.exports = {
-    appID: 'wx5746a72bcfd1a66d',
-    appsecret: '8317a77791c9003bcb66a597ab66bb03',
+    appID: 'wx2c7d9ab11111111111111111',
+    appsecret: '193bd0da606222222222222222222222',
 
     token: "demotoken",
 
@@ -14,5 +14,5 @@ module.exports = {
     noncestr: 'Wm3WZYTPz0wzccnW',
 
     jsApiList: ["onMenuShareTimeline", "onMenuShareAppMessage", "onMenuShareQQ", "onMenuShareWeibo", "onMenuShareQZone", "startRecord", "stopRecord", "onVoiceRecordEnd", "playVoice", "pauseVoice", "stopVoice", "onVoicePlayEnd", "uploadVoice", "downloadVoice", "chooseImage", "previewImage", "uploadImage", "downloadImage", "translateVoice", "getNetworkType", "openLocation", "getLocation", "hideOptionMenu", "showOptionMenu", "hideMenuItems", "showMenuItems", "hideAllNonBaseMenuItem", "showAllNonBaseMenuItem", "closeWindow", "scanQRCode", "chooseWXPay", "openProductSpecificView", "addCard", "chooseCard", "openCard"]
-    
+
 };

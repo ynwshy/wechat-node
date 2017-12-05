@@ -19,7 +19,8 @@ router.get('/', function(req, res, next) {
     accesstokenUtils.getJsapiTicket()
         .then(function(jsapiTicket) {
             // sign('jsapi_ticket', 'http://example.com');
-            res.send(JSON.stringify(sign('jsapi_ticket', req.params.url)));
+            // console.log(JSON.stringify(sign(jsapiTicket, req.params.url)));
+            res.send(JSON.stringify(sign(jsapiTicket, req.query.url)));
         });
 
 });

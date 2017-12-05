@@ -108,7 +108,7 @@ Wechat.prototype.updateAccessToken = function() {
         request({ url: url, json: true }, function(error, response, body) {
             if (!error && response.statusCode === 200) {
                 var now = (new Date().getTime());
-                var expires_in = now + (20) * 1000;
+                var expires_in = now + (60) * 1000;
                 body.expires_in = expires_in;
                 resolve(body);
             } else {

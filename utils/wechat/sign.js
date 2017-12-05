@@ -37,12 +37,13 @@ var raw = function(args) {
  */
 var sign = function(jsapi_ticket, url) {
     var ret = {
-        jsapi_ticket: jsapi_ticket,
+        jsapi_ticket: jsapi_ticket.ticket,
         nonceStr: createNonceStr(),
         timestamp: createTimestamp(),
         url: url
     };
     var string = raw(ret);
+    console.log(string);
     shaObj = new jsSHA(string, 'TEXT');
     ret.signature = shaObj.getHash('SHA-1', 'HEX');
     ret.appId = wechat_cfg.appID;

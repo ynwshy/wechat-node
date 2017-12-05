@@ -13,6 +13,8 @@
     <meta name="keywords" content="your keywords">
     <!-- SEO页面描述 -->
     <meta name="description" content="your description">
+
+    <script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
 </head>
 
 <body>
@@ -20,13 +22,14 @@
         <script src="http://apps.bdimg.com/libs/jquery/2.1.1/jquery.min.js"></script>
         <script>
         console.log(window.location.href);
+        alert(location.href.split('#')[0])
         $.ajax({
-            url: "https://hy.800ys.com/wechat/jssdk",
+            url: "http://hy.800ys.com/wechat/jssdk?url="+window.location.href,
             type: "GET",
             dataType: 'json',
-            data: {
-                url: window.location.href,
-            },
+            // data: {
+            //     url: window.location.href,
+            // },
             success: function(data) {
                 console.log(data);
                 // alert(JSON.stringify(data));
