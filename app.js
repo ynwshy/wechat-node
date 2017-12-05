@@ -24,14 +24,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 var index = require('./routes/index');
 var users = require('./routes/users');
 
-var wechat_checksignature = require('./routes/wechat/checksignature');
-var wechat_accesstoken = require('./routes/wechat/accesstoken');
-
 app.use('/', index);
 app.use('/users', users);
 
+var wechat_checksignature = require('./routes/wechat/checksignature');
+var wechat_accesstoken    = require('./routes/wechat/accesstoken');
+var wechat_jsapiTicket    = require('./routes/wechat/jsapiticket');
+var wechat_jssdk          = require('./routes/wechat/jssdk');
+
 app.use('/wechat/checksignature', wechat_checksignature);
-app.use('/wechat/accesstoken', wechat_accesstoken);
+app.use('/wechat/accesstoken',    wechat_accesstoken);
+app.use('/wechat/jsapiticket',    wechat_jsapiTicket);
+app.use('/wechat/jssdk',          wechat_jssdk);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

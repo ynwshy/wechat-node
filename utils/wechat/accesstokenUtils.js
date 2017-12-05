@@ -7,7 +7,7 @@ var fsPromiseUtils = require('../../utils/fsPromiseUtils'); //这个辅助代码
 
 var prefix = 'https://api.weixin.qq.com/cgi-bin/'; //因为这一部分API是固定的，所以我们单独拿出来
 var api = {
-    accessToken: prefix + 'token?grant_type=client_credential'
+    accessToken: prefix + 'token?grant_type=client_credential',
 };
 
 function Wechat() { //这里面的值就是从中间件传过来的
@@ -16,24 +16,25 @@ function Wechat() { //这里面的值就是从中间件传过来的
     this.wechat_file = wechat_cfg.wechat_file;
 
 
-    this.getAccessToken = function(getAccessTokenCallback) {
+    this.getAccessToken = function() {
 
-        return new Promise(function(resolve, reject) {
-            fsPromiseUtils.readFileAsync(wechat_cfg.wechat_file)
+        return new Promise(function(getAccesssTokenResolve, reject) {
+            fsPromiseUtils.readFileAsync(wechat_cfg.accesstoken_file)
                 .then(function(fsContent) {
-                    console.log("fsContent: " + fsContent);
+                    console.log("local_accesstoken:");
                     var fsContentData = JSON.parse(fsContent);
+                    console.log(fsContentData);
                     if (_this.isValidAccessToken(fsContentData)) {
-                        resolve(fsContentData);
+                        getAccesssTokenResolve(fsContentData);
                     } else {
                         _this.updateAccessToken()
                             .then(function(reqData) {
-                                console.log("updateAccessToken  callback :");
-                                if (reqData !== null) {
-                                    _this.saveAccessToken(reqData).then(function() {
-                                        resolve(reqData);
+                                console.log("update_accesstoken:");
+                                console.log(reqData);
+                                fsPromiseUtils.writeFileAsync(wechat_cfg.accesstoken_file, JSON.stringify(reqData))
+                                    .then(function() {
+                                        getAccesssTokenResolve(reqData);
                                     });
-                                }
                             });
                     }
                 });
@@ -45,13 +46,36 @@ function Wechat() { //这里面的值就是从中间件传过来的
         console.log(accessToken);
     });
 
-    this.saveAccessToken = function(data) {
-        //通过这个来保存access_token
-        return fsPromiseUtils.writeFileAsync(wechat_cfg.wechat_file, JSON.stringify(data));
+
+
+    this.getJsapiTicket = function() {
+        console.log("accesstokenUtils.getJsapiTicket()");
+        return this.getAccessToken().then(function(accessToken) {
+            console.log(accessToken);
+            return new Promise(function(getApiTicketResolve, reject) {
+                fsPromiseUtils.readFileAsync(wechat_cfg.jsapiTicket_file)
+                    .then(function(fsContent_jsapiticket) {
+                        console.log("getJsapiTicket fsContent_jsapiticket: " + fsContent_jsapiticket);
+                        var fsContentData = JSON.parse(fsContent_jsapiticket);
+                        if (_this.isValidJsapiTicket(fsContentData)) {
+                            getApiTicketResolve(fsContentData);
+                        } else {
+                            _this.updateJsapiTicket(accessToken.access_token)
+                                .then(function(reqjsapiTicketData) {
+                                    console.log("updateJsapiTicket  callback :");
+                                    fsPromiseUtils.writeFileAsync(wechat_cfg.jsapiTicket_file, JSON.stringify(reqjsapiTicketData))
+                                        .then(function() {
+                                            console.log(reqjsapiTicketData);
+                                            getApiTicketResolve(reqjsapiTicketData);
+                                        });
+                                });
+                        }
+                    });
+            });
+        });
+
     };
 
-    //按照上面我们讲的逻辑来实现getAccessToken
-    // this.getAccessToken()
 
 }
 
@@ -60,10 +84,17 @@ Wechat.prototype.isValidAccessToken = function(data) {
     if (!data || !data.access_token || !data.expires_in) {
         return false;
     }
-    console.log("------------------------");
-    console.log(new Date().getTime());
-    console.log(data.expires_in);
-    console.log("------------------------");
+    if (new Date().getTime() < data.expires_in) {
+        return true;
+    } else {
+        return false;
+    }
+};
+
+Wechat.prototype.isValidJsapiTicket = function(data) {
+    if (!data || !data.ticket || !data.expires_in) {
+        return false;
+    }
     if (new Date().getTime() < data.expires_in) {
         return true;
     } else {
@@ -72,21 +103,34 @@ Wechat.prototype.isValidAccessToken = function(data) {
 };
 
 Wechat.prototype.updateAccessToken = function() {
-    var _this = this;
     var url = api.accessToken + '&appid=' + wechat_cfg.appID + '&secret=' + wechat_cfg.appsecret;
-    console.log(url);
     return new Promise(function(resolve, reject) {
         request({ url: url, json: true }, function(error, response, body) {
-            console.log("updateAccessToken");
-            console.log(body);
             if (!error && response.statusCode === 200) {
                 var now = (new Date().getTime());
                 var expires_in = now + (20) * 1000;
                 body.expires_in = expires_in;
-                // _this.saveAccessToken(body);
                 resolve(body);
             } else {
-                reject()
+                reject();
+            }
+        });
+    });
+};
+
+Wechat.prototype.updateJsapiTicket = function(access_token) {
+    var url = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=" + access_token + "&type=jsapi";
+    console.log(url);
+    return new Promise(function(resolve, reject) {
+        request({ url: url, json: true }, function(error, response, body) {
+            console.log(body);
+            if (!error && response.statusCode === 200) {
+                var now = (new Date().getTime());
+                var expires_in = now + (60) * 1000;
+                body.expires_in = expires_in;
+                resolve(body);
+            } else {
+                reject();
             }
         });
     });
